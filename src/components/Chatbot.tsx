@@ -79,7 +79,31 @@ const Chatbot = () => {
       setUserInfo((prev) => ({ ...prev, email: inputValue, collected: true }));
       setAwaitingEmail(false);
       
-      // Simulate sending to email
+      // Collect all user messages for the email body
+      const userMessages = [...messages, userMessage]
+        .filter(m => m.sender === 'user')
+        .map(m => m.text)
+        .join('\n');
+
+      // Send to Formspree
+      try {
+        await fetch('https://formspree.io/f/mvzwyplo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            from_name: 'Chatbot Visitor',
+            from_email: inputValue,
+            message: userMessages,
+            _subject: `Chatbot Query from ${inputValue} - Milan Label Website`,
+          }),
+        });
+      } catch {
+        // Silently fail - don't interrupt chat experience
+      }
+
       setTimeout(() => {
         setIsTyping(false);
         const botResponse: Message = {
